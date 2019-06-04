@@ -20,10 +20,8 @@ function filterFiles (filter) {
 }
 
 async function checkForStaleRefScreenshots ({ dir, filter }) {
-  const refImgs = filterFiles(filter)(await glob(path.join(dir, `*.new.png`)))
-  await glob(path.join(dir, `${filter || ''}*.png`), {
-    ignore: path.join(dir, `${filter || ''}*.{diff,new}.png`)
-  })
+  const refImgs = filterFiles(filter)(await glob(path.join(dir, `*.png`)))
+    .filter(file => !file.endsWith('.diff.png') && !file.endsWith('.new.png'));
 
   let hasStaleRefImgs = false
 
@@ -77,7 +75,7 @@ async function compareNewScreenshotsToRefScreenshots ({ dir, filter, threshold }
 
 async function promoteNewScreenshots ({ dir, filter }) {
   const newImgs = filterFiles(filter)(await glob(path.join(dir, `*.new.png`)))
-  const oldDiffs = await glob(path.join(dir, `${filter || ''}*.diff.png`))
+  const oldDiffs = filterFiles(filter)(await glob(path.join(dir, `*.diff.png`)));
 
   for (const newImg of newImgs) {
     await promoteNewScreenshot(newImg)
@@ -132,7 +130,7 @@ async function readScreenshot (img) {
 }
 
 async function removeNonRefScreenshots ({ dir, filter }) {
-  const nonRefImgs = await glob(path.join(dir, `${filter || ''}*.{diff,new}.png`))
+  const nonRefImgs = filterFiles(filter)(await glob(path.join(dir, `*.{diff,new}.png`)));
 
   for (const nonRefImg of nonRefImgs) {
     await remove(nonRefImg)
